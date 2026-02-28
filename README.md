@@ -32,3 +32,4 @@ A mission-critical bridge between private command interfaces and public digital 
 
 ---
 *"Resistance is not an error. It is a data point."*
+
