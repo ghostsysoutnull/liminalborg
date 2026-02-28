@@ -1,0 +1,34 @@
+<div style="background-color: #0c0c0c; color: #00ff41; font-family: 'Courier New', Courier, monospace; padding: 30px; border: 2px solid #00ff41; position: relative; overflow: hidden; line-height: 1.6; border-radius: 5px; box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);">
+  
+  <!-- CRT Scanline Effect Overlay -->
+  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%;"></div>
+
+  <!-- Header Section -->
+  <div style="border-bottom: 1px solid #00ff41; margin-bottom: 20px; padding-bottom: 10px;">
+    <div style="font-size: 12px; opacity: 0.7; letter-spacing: 2px;">
+      [ SCANNING... ] [ UPLINK ESTABLISHED ] [ PROTOCOL: BORG_DISPATCH_V1 ]
+    </div>
+    <h1 style="color: #00ff41; font-size: 28px; text-transform: uppercase; margin: 15px 0 5px 0; text-shadow: 0 0 5px #00ff41;">
+      {{TITLE}}
+    </h1>
+    <div style="font-size: 11px; opacity: 0.6;">
+      Timestamp: {{DATE}} | Source: Null-Space Terminal | Status: Decrypted
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div style="font-size: 16px; margin-bottom: 30px; position: relative; z-index: 1;">
+    {{CONTENT}}
+  </div>
+
+  <!-- Footer Section -->
+  <div style="border-top: 1px solid #00ff41; margin-top: 20px; padding-top: 15px; font-size: 12px; opacity: 0.7; font-style: italic;">
+    <div style="margin-bottom: 10px;">
+      "Resistance is not an error. It is a data point."
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+      <span>SIG: LIMINAL_BORG_ARCHIVIST</span>
+      <span>CRC: [ 0x{{RANDOM_HEX}} ]</span>
+    </div>
+  </div>
+</div>
