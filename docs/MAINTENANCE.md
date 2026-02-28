@@ -17,4 +17,9 @@ If the bot is unresponsive, perform these steps in order:
 4. **Gemini CLI Issues (Error 42)**:
    If Gemini fails to run, it's usually a project path mismatch in `~/.gemini/projects.json`. The bot has auto-fallback, but a manual check of that file helps.
 
-*Refer to GEMINI.md for full architectural standards.*
+5. **Verification before Fixes**:
+   Before modifying code, always run the **Virtual Operator Protocol** simulation to reproduce the error locally:
+   `npm test`
+   *This verifies handlers, parsing logic, and end-to-end flows using local mocks.*
+
+*Refer to docs/ARCHITECTURE.md for full architectural standards.*

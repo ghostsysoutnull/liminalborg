@@ -4,14 +4,21 @@
 A mission-critical bridge between Telegram and the Gemini CLI. Designed for high availability, modularity, and rapid feature iteration.
 
 ### 📚 Project Documentation
-- [README.md](README.md): General project overview and setup.
+- [README.md](../README.md): General project overview and setup.
 - [MAINTENANCE.md](MAINTENANCE.md): Quick-start for troubleshooting and process recovery.
-- [LESSONS_LEARNED.md](LESSONS_LEARNED.md): Historical bug resolutions and architectural decisions.
-- [Review Results](plans/review.md): Results of the 2026-02-26 Architectural Audit.
-- [Feature Template](plans/FEATURE_TEMPLATE.md): Mandatory template for new feature proposals.
+- [LESSONS_LEARNED.md](LESSONS_LEARNED.md): Authoritative knowledge base of technical decisions.
+- [System Audits](AUDITS.md): Chronological record of architectural hardening.
 
 ## 2. Core Architecture
-... (Runtime etc)
+
+### 2.1 The Bridge (src/bot.js)
+The primary entry point that manages the Telegraf lifecycle and polling.
+
+### 2.2 Subsystem Orchestration (src/lib/)
+Domain-specific logic for Google Workspace, X.com, and Persona generation.
+
+### 2.3 The Ghost Worker Delegation Pattern
+Heavy or long-running tasks (e.g., Gemini generation, file conversion) are delegated to child processes via `spawn`. This ensures the main event loop remains responsive for heartbeat pulses and concurrent user requests.
 
 ## 3. Directory Structure & Responsibilities
 ```text
@@ -54,6 +61,11 @@ A mission-critical bridge between Telegram and the Gemini CLI. Designed for high
 - **Error Boundaries**: All async operations must be wrapped in `try/catch` with appropriate logging and user feedback.
 - **Process Exit**: On critical launch failures, the application must call `process.exit(1)` to allow PM2 to initiate a restart.
 - **Zombies**: Shutdown handlers (`SIGTERM`, `SIGINT`) must explicitly kill any child processes in `global.activeProcesses`.
+
+### 4.5 HTML-First UX & Defensive Parsing
+- **Standard**: All dynamic bot responses must use `parse_mode: 'HTML'`. Markdown is strictly deprecated for technical reporting due to parsing fragility with special symbols (`_`, `*`).
+- **Escaping**: Dynamic content must be wrapped in `escapeHtml()` from `src/lib/utils.js`.
+- **Defensive Parsing**: Use `robustParse()` when handling AI output to manage technical noise and non-standard JSON artifacts like trailing commas.
 
 ## 5. Security Protocol
 - **Middleware**: Authorization is enforced via `src/middlewares/auth.js`. No command or event listener should execute without this layer.
