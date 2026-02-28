@@ -8,7 +8,8 @@
     "restart": "pm2 restart ecosystem.config.js",
     "logs": "pm2 logs telegram-bot",
     "dev": "nodemon src/bot.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "scrub:check": "node scripts/sentinel.js"
   },
   "keywords": [],
   "author": "",

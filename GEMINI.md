@@ -10,10 +10,11 @@ Welcome, Agent. You are tasked with the sustainment and evolution of the Liminal
 ## 🦾 Feature Lifecycle (MANDATORY)
 1. **Persistence**: Initialize/Update `plans/MISSION_STATUS.json` at the start of any multi-turn task.
 2. **Design**: Create a proposal in `plans/features/` using the template.
-3. **Review**: Perform an audit using the `telegram-bot-review` skill.
-4. **Test**: Implement validation scripts or Vitest suites in `src/__tests__/`.
-5. **Implement**: Code following the "Zero-Block Policy."
-6. **Verify**: Perform a syntax check (`node --check`) before restarting the bot.
+3. **Hygiene**: Run `npm run scrub:check` to ensure no sensitive identifiers leaked into docs or tests.
+4. **Review**: Perform an audit using the `telegram-bot-review` skill.
+5. **Test**: Implement validation scripts or Vitest suites in `src/__tests__/`.
+6. **Implement**: Code following the "Zero-Block Policy."
+7. **Verify**: Perform a syntax check (`node --check`) before restarting the bot.
 
 ## ⚙️ Development Standards
 - **Defensive Parsing**: Always use `robustParse` (from `src/lib/utils.js`) when handling AI output to manage noise and trailing commas.

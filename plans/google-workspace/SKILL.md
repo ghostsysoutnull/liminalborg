@@ -1,6 +1,6 @@
 ---
 name: google-workspace
-description: Manage Gmail and Google Drive for liminalcoreborg@gmail.com. Allows sending emails and uploading files directly from the CLI or via automated agents.
+description: Manage Gmail and Google Drive for your-bot-email@gmail.com. Allows sending emails and uploading files directly from the CLI or via automated agents.
 ---
 
 # Google Workspace Skill

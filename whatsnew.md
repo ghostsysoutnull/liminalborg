@@ -38,6 +38,10 @@ This document tracks the significant architectural and feature updates to the Li
 - **Voice Fix**: Corrected event mapping for voice messages, restoring the transcription pipeline.
 - **Natural Language Directives**: Enabled "Post this to X" and "Tweet this" as replies to existing messages.
 
+### 🛡️ Automated Hygiene (Sentinel Protocol)
+- **Security Linter**: Implemented `scripts/sentinel.js` to automatically scan for sensitive environment variables (Chat IDs, API keys, emails) in the codebase.
+- **Gated Deployment**: Mandatory `npm run scrub:check` integrated into the AI mission guide to prevent accidental leaks in future commits.
+
 ## [2026-02-28] - High-Signal Command Unification
 
 ### ⚡️ Simplified Architecture
