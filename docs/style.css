@@ -1,0 +1,184 @@
+:root {
+    --bg-color: #050505;
+    --text-color: #00ff41; /* Classic Matrix Green */
+    --accent-color: #008f11;
+    --glow-color: rgba(0, 255, 65, 0.3);
+    --font-main: 'JetBrains Mono', monospace;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+/* CRT Scanline Effect */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.25) 50%
+    ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.06),
+        rgba(0, 255, 0, 0.02),
+        rgba(0, 0, 255, 0.06)
+    );
+    background-size: 100% 4px, 3px 100%;
+    z-index: 999;
+    pointer-events: none;
+}
+
+.terminal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle,
+        transparent 60%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+header {
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--accent-color);
+    padding-bottom: 1rem;
+}
+
+.glitch {
+    font-size: 3rem;
+    font-weight: bold;
+    position: relative;
+    text-shadow: 0 0 10px var(--glow-color);
+}
+
+.status-line {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+}
+
+.blink {
+    animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+    to { visibility: hidden; }
+}
+
+.hero {
+    margin-bottom: 4rem;
+}
+
+.ascii-art {
+    font-size: 0.6rem;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+    color: var(--accent-color);
+    text-shadow: 0 0 5px var(--glow-color);
+}
+
+.manifesto {
+    font-size: 1.2rem;
+    border-left: 3px solid var(--accent-color);
+    padding-left: 1.5rem;
+    color: #fff;
+    text-shadow: 0 0 5px var(--text-color);
+}
+
+.protocols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+}
+
+.protocol-card {
+    border: 1px solid var(--accent-color);
+    padding: 1.5rem;
+    background: rgba(0, 255, 65, 0.02);
+    transition: all 0.3s ease;
+}
+
+.protocol-card:hover {
+    background: rgba(0, 255, 65, 0.05);
+    box-shadow: 0 0 15px var(--glow-color);
+    transform: translateY(-5px);
+}
+
+.protocol-card h3 {
+    margin-bottom: 1rem;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.uplinks {
+    margin-bottom: 4rem;
+}
+
+.uplinks h2 {
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--accent-color);
+    display: inline-block;
+}
+
+.link-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.link-item {
+    color: var(--text-color);
+    text-decoration: none;
+    border: 1px solid var(--text-color);
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.link-item:hover {
+    background: var(--text-color);
+    color: var(--bg-color);
+    box-shadow: 0 0 20px var(--text-color);
+}
+
+footer {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    font-size: 0.8rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    .ascii-art { font-size: 0.4rem; }
+    .glitch { font-size: 2rem; }
+    .container { padding: 1rem; }
+}

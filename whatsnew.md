@@ -42,6 +42,12 @@ This document tracks the significant architectural and feature updates to the Li
 - **Security Linter**: Implemented `scripts/sentinel.js` to automatically scan for sensitive environment variables (Chat IDs, API keys, emails) in the codebase.
 - **Gated Deployment**: Mandatory `npm run scrub:check` integrated into the AI mission guide to prevent accidental leaks in future commits.
 
+## [2026-02-28] - The Nexus Deployment
+
+### 🌐 Project Presentation
+- **The Nexus**: Launched a high-fidelity cyberpunk landing page hosted on GitHub Pages. Provides an immersive entry point for the collective's technical and persona-driven protocols.
+- **Unified Documentation**: Finalized the consolidation of all guides, audits, and scenarios into a clean, hierarchical documentation tree.
+
 ## [2026-02-28] - High-Signal Command Unification
 
 ### ⚡️ Simplified Architecture
