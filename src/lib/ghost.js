@@ -18,7 +18,7 @@ class GhostWorker {
         return new Promise((resolve, reject) => {
             const proc = spawn(command, args, {
                 cwd: config.paths.root,
-                env: process.env
+                env: config.rawEnv
             });
 
             let stdout = '';

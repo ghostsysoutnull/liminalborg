@@ -1,11 +1,10 @@
-const { promises: fsPromises, createWriteStream } = require('fs');
+const { promises: fsPromises } = require('fs');
 const path = require('path');
-const axios = require('axios');
 const { spawn } = require('child_process');
 const { runGemini } = require('./gemini');
 const config = require('../config');
 const logger = require('../config/logger');
-const { escapeHtml } = require('./utils');
+const { escapeHtml, downloadFile } = require('./utils');
 
 async function handleVoice(voice, ctx) {
     logger.info({ chatId: ctx.chat.id }, 'Processing voice message');
@@ -20,19 +19,7 @@ async function handleVoice(voice, ctx) {
         const oggPath = path.join(config.paths.uploads, `voice_${voice.file_id}.ogg`);
         const wavPath = path.join(config.paths.uploads, `voice_${voice.file_id}.wav`);
 
-        const response = await axios({ 
-            method: 'GET', 
-            url: fileLink.href, 
-            responseType: 'stream',
-            timeout: 30000 // 30 second timeout
-        });
-        const writer = createWriteStream(oggPath);
-        response.data.pipe(writer);
-
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
+        await downloadFile(fileLink.href, oggPath, 30000);
 
         await new Promise((resolve, reject) => {
             const ffmpeg = spawn('ffmpeg', ['-i', oggPath, '-ar', '16000', '-ac', '1', wavPath, '-y']);
@@ -86,19 +73,7 @@ async function handleFile(fileData, ctx) {
         const sanitizedFileName = path.basename(fileName);
         const filePath = path.join(config.paths.uploads, sanitizedFileName);
 
-        const response = await axios({ 
-            method: 'GET', 
-            url: fileLink.href, 
-            responseType: 'stream',
-            timeout: 60000 // 60 second timeout for potentially larger files
-        });
-        const writer = createWriteStream(filePath);
-        response.data.pipe(writer);
-
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
+        await downloadFile(fileLink.href, filePath, 60000);
 
         if (statusMsg) await ctx.telegram.deleteMessage(ctx.chat.id, statusMsg.message_id).catch(() => {});
         

@@ -8,6 +8,8 @@ const config = {
   botToken: process.env.TELEGRAM_BOT_TOKEN,
   authorizedChatId: process.env.AUTHORIZED_CHAT_ID,
   shadowMode: process.env.SHADOW_MODE === 'true',
+  logLevel: process.env.LOG_LEVEL || 'debug',
+  homeDir: process.env.HOME || '',
   twitter: {
     appKey: process.env.X_API_KEY,
     appSecret: process.env.X_API_SECRET,
@@ -26,7 +28,10 @@ const config = {
     scripts: path.join(rootDir, 'scripts'),
     transcribeScript: path.join(rootDir, 'scripts', 'transcribe.py'),
     chatsDir: path.join(process.env.HOME || '', '.gemini', 'tmp', 'telegram-bot', 'chats')
-  }
+  },
+  // Provide the raw process.env for child processes to inherit, 
+  // but accessed only through here.
+  rawEnv: process.env
 };
 
 // Validation

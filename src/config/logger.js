@@ -29,7 +29,7 @@ if (config.env === 'production') {
 }
 
 const logger = pino({
-  level: process.env.LOG_LEVEL || 'debug',
+  level: config.logLevel,
   timestamp: pino.stdTimeFunctions.isoTime
 }, transports);
 

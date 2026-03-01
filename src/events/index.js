@@ -68,25 +68,14 @@ const handlers = {
         try {
             const googleManager = require('../lib/google');
             const fileLink = await ctx.telegram.getFileLink(file.file_id);
-            const axios = require('axios');
             const path = require('path');
             const fs = require('fs');
 
             const sanitizedFileName = path.basename(fileName);
             const filePath = path.join(config.paths.uploads, sanitizedFileName);
-            const response = await axios({ 
-                method: 'GET', 
-                url: fileLink.href, 
-                responseType: 'stream',
-                timeout: 60000 // 60s timeout
-            });
-            const writer = fs.createWriteStream(filePath);
-            response.data.pipe(writer);
-
-            await new Promise((resolve, reject) => {
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-            });
+            
+            const { downloadFile } = require('../lib/utils');
+            await downloadFile(fileLink.href, filePath, 60000);
 
             const driveFile = await googleManager.uploadFile(sanitizedFileName, filePath, mimeType);
             const journal = require('../lib/journal');

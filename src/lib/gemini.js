@@ -4,17 +4,14 @@ const logger = require('../config/logger');
 const { MESSAGES } = require('./constants');
 const { escapeHtml } = require('./utils');
 
+const simulation = require('./simulation');
+
 async function runGemini(message, ctx) {
     const chatId = ctx.chat.id;
     logger.info({ chatId, message }, 'Running Gemini');
 
     if (config.shadowMode) {
-        logger.info({ chatId }, 'SHADOW_MODE: Mocking Gemini response');
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
-        const mockResponse = `🛡️ <b>SHADOW_MODE: Simulated Uplink</b>\n\n` +
-                             `I have received your signal: "<i>${escapeHtml(message)}</i>"\n\n` +
-                             `The Prime Intelligence is currently operating in a simulated environment. Operational integrity is 100%.`;
-        return ctx.reply(mockResponse, { parse_mode: 'HTML' }).catch(e => logger.error(e, 'Error sending mock response'));
+        return simulation.mockGeminiResponse(message, ctx).catch(e => logger.error(e, 'Error sending mock response'));
     }
     
     let waitMsg;
@@ -32,7 +29,7 @@ async function runGemini(message, ctx) {
         
         return spawn('gemini', [...args, ...extraArgs], {
             cwd: config.paths.root,
-            env: { ...process.env, NODE_ENV: config.env }
+            env: { ...config.rawEnv, NODE_ENV: config.env }
         });
     };
 

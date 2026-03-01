@@ -57,7 +57,32 @@ function robustParse(rawString, requiredKey = '') {
     }
 }
 
+const fs = require('fs');
+const axios = require('axios');
+const path = require('path');
+
+/**
+ * Robustly downloads a file from a URL to a local path.
+ */
+async function downloadFile(url, destPath, timeout = 60000) {
+    const response = await axios({
+        method: 'GET',
+        url: url,
+        responseType: 'stream',
+        timeout: timeout
+    });
+
+    const writer = fs.createWriteStream(destPath);
+    response.data.pipe(writer);
+
+    return new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+    });
+}
+
 module.exports = {
     escapeHtml,
-    robustParse
+    robustParse,
+    downloadFile
 };
