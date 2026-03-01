@@ -35,7 +35,7 @@ describe('Simulation: Action Handlers', () => {
 
         const lastEvent = ctx.getLastEvent();
         expect(lastEvent.type).toBe('EDIT');
-        expect(lastEvent.content).toContain('Borg Terminal: Help');
+        expect(lastEvent.content).toContain('Collective Terminal: Interface');
         expect(lastEvent.extra.reply_markup.inline_keyboard[0][0].text).toContain('Back to Categories');
     });
 });

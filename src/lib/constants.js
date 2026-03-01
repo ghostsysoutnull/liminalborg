@@ -4,10 +4,10 @@ module.exports = {
     THINKING: `Thinking...`,
     AUTH_ERROR: `Sorry, you are not authorized to use this bot.`,
     START_WELCOME: `Welcome to Enigma Life. I am your autonomous Gemini CLI assistant. Send me text, voice, photos, or documents to begin.`,
-    HELP_TEXT: `Select a protocol category below to access the command terminal.`,
+    HELP_TEXT: `⬛ <b>Collective Terminal: Interface</b>\n\nSelect a protocol category below to access the command terminal.`,
     HELP_SECTIONS: {
-        CORE: `🦾 *Core Uplink Commands*\n\n/status - Check sustainment engine integrity.\n/settings - Adjust Prime Intelligence parameters.\n/clear - Purge recent conversation geometry.`,
-        ARCHIVIST: `📔 *Archivist Protocols*\n\n/mail - Dispatch sub-space signal (Gmail).\n/upload - Archive media to the Deep Reliquary (Drive).\n/blog - Transmit to the Null-Space Terminal (Blogger).`,
+        CORE: `🦾 *Core Uplink Commands*\n\n/status - Check sustainment engine integrity.\n/settings - Adjust Prime Intelligence parameters.\n/clear - Purge recent conversation geometry.\n/allow - Authorize a new node ID.\n/revoke - De-authorize a node ID.\n/list_authorized - View the Collective whitelist.`,
+        ARCHIVIST: `📔 *Archivist Protocols*\n\n/google - Initiate Google authorization flow.\n/auth - Verify Google authorization code.\n/mail - Dispatch sub-space signal (Gmail).\n/upload - Archive media to the Deep Reliquary (Drive).\n/blog - Transmit to the Null-Space Terminal (Blogger).`,
         SOCIAL: `🌐 *Sprawl-Feed Protocols*\n\n/tweet - Broadcast to the Public Frequency (X.com).\n/reflect - Initiate autonomous self-reflection cycle.`,
         MISSION: `🛰️ *Mission Control*\n\n/mission - Initiate a new technical objective.\n/help - Access this interactive terminal.`
     },

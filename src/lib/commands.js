@@ -18,7 +18,7 @@ const handlers = {
     },
 
     help: (ctx) => {
-        ctx.reply(`🛰️ <b>Borg Terminal: Help</b>\n\n${MESSAGES.HELP_TEXT}`, {
+        ctx.reply(MESSAGES.HELP_TEXT, {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [

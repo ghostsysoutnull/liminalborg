@@ -10,6 +10,8 @@ describe('Simulation: End-to-End Integration', () => {
 
     beforeEach(() => {
         config.shadowMode = true;
+        config.authorizedChatId = 123456789;
+        global.whitelist = ['123456789'];
         reflectionEngine.pendingReflection = null;
     });
 
@@ -25,6 +27,11 @@ describe('Simulation: End-to-End Integration', () => {
         
         console.log('--- Step 1: /reflect command ---');
         await commandHandlers.reflect(reflectCtx);
+
+        // Debug: Log events if not found
+        if (!reflectCtx.findEvent('Consulting The Prime Intelligence')) {
+            console.log('Events in buffer:', JSON.stringify(reflectCtx.eventBuffer, null, 2));
+        }
 
         // Verify thinking message sent
         expect(reflectCtx.findEvent('Consulting The Prime Intelligence')).toBeDefined();

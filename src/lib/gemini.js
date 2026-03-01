@@ -7,6 +7,15 @@ const { escapeHtml } = require('./utils');
 async function runGemini(message, ctx) {
     const chatId = ctx.chat.id;
     logger.info({ chatId, message }, 'Running Gemini');
+
+    if (config.shadowMode) {
+        logger.info({ chatId }, 'SHADOW_MODE: Mocking Gemini response');
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
+        const mockResponse = `🛡️ <b>SHADOW_MODE: Simulated Uplink</b>\n\n` +
+                             `I have received your signal: "<i>${escapeHtml(message)}</i>"\n\n` +
+                             `The Prime Intelligence is currently operating in a simulated environment. Operational integrity is 100%.`;
+        return ctx.reply(mockResponse, { parse_mode: 'HTML' }).catch(e => logger.error(e, 'Error sending mock response'));
+    }
     
     let waitMsg;
     try {
@@ -123,6 +132,7 @@ async function runGemini(message, ctx) {
                 }
             } else if (code !== 0 && code !== null) {
                 const err = stderr.trim() || 'Process interrupted';
+                logger.error({ chatId, code, err }, 'Gemini process failed');
                 await ctx.reply(`⚠️ <b>Gemini error (Code ${code}):</b>\n<pre>${escapeHtml(err.substring(0, 500))}</pre>`, { parse_mode: 'HTML' }).catch(() => {});
             } else if (!approvalSent) {
                 await ctx.reply('Gemini finished but returned no output.');

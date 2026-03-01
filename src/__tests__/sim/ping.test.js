@@ -17,13 +17,19 @@ describe('Simulation: Basic Commands', () => {
         expect(lastEvent.content).toBe(MESSAGES.PING_PONG);
     });
 
-    it('should render help menu correctly', async () => {
+    it('should render help menu correctly and without header duplication', async () => {
         const ctx = new SimulationContext();
         
         await handlers.help(ctx);
         
-        const event = ctx.findEvent('Borg Terminal: Help');
+        const event = ctx.findEvent('Collective Terminal: Interface');
         expect(event).toBeDefined();
+
+        // Regression check: Ensure header isn't duplicated
+        const header = '⬛ <b>Collective Terminal: Interface</b>';
+        const occurrences = event.content.split(header).length - 1;
+        expect(occurrences, 'Header should only appear once in the output').toBe(1);
+
         expect(event.extra.reply_markup.inline_keyboard).toBeDefined();
         expect(event.extra.reply_markup.inline_keyboard[0][0].text).toBe('🦾 Core');
     });

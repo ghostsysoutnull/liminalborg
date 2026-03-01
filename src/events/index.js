@@ -238,7 +238,7 @@ const handlers = {
         const section = ctx.match[1];
         const text = MESSAGES.HELP_SECTIONS[section] || 'Section not found.';
         
-        await ctx.editMessageText(`🛰️ <b>Borg Terminal: Help</b>\n\n${text}`, {
+        await ctx.editMessageText(`⬛ <b>Collective Terminal: Interface</b>\n\n${text}`, {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
@@ -249,7 +249,7 @@ const handlers = {
     },
 
     help_root: async (ctx) => {
-        await ctx.editMessageText(`🛰️ <b>Borg Terminal: Help</b>\n\n${MESSAGES.HELP_TEXT}`, {
+        await ctx.editMessageText(MESSAGES.HELP_TEXT, {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [

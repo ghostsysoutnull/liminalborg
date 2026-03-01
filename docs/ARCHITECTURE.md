@@ -5,6 +5,7 @@ A mission-critical bridge between Telegram and the Gemini CLI. Designed for high
 
 ### 📚 Project Documentation
 - [README.md](../README.md): General project overview and setup.
+- [WORKSPACE.md](../../WORKSPACE.md): High-level organizational architecture for the Collective.
 - [MAINTENANCE.md](MAINTENANCE.md): Quick-start for troubleshooting and process recovery.
 - [LESSONS_LEARNED.md](LESSONS_LEARNED.md): Authoritative knowledge base of technical decisions.
 - [System Audits](AUDITS.md): Chronological record of architectural hardening.
@@ -20,12 +21,15 @@ Domain-specific logic for Google Workspace, X.com, and Persona generation.
 ### 2.3 The Ghost Worker Delegation Pattern
 Heavy or long-running tasks (e.g., Gemini generation, file conversion) are delegated to child processes via `spawn`. This ensures the main event loop remains responsive for heartbeat pulses and concurrent user requests.
 
+### 2.4 The Virtual Operator Protocol (VOP) & SHADOW_MODE
+All critical subsystems (Gemini, X.com, Google) implement a `shadowMode` branch triggered by `config.shadowMode`. This allows for high-fidelity simulation of user interactions and API responses without network dependency or real-world side effects.
+
 ## 3. Directory Structure & Responsibilities
 ```text
-/home/bpfur/tools/telegram-bot/
+/home/bpfur/collective/liminal-borg/
 ├── src/
 │   ├── bot.js              # Bootstrap & Application Initialization
-│   ├── __tests__/          # Automated test suites (Vitest)
+│   ├── __tests__/          # Automated test suites (Vitest & VOP)
 │   ├── config/             # Centralized config and logger setup
 │   ├── middlewares/        # Telegraf middleware (Auth, Analytics, etc.)
 │   ├── events/             # Domain-specific event handlers (Text, Voice, File)
