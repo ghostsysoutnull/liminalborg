@@ -38,12 +38,10 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
     const run = (args, overrideOptions = {}) => {
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
-        if (overrideOptions.yolo) extraArgs.push('--yolo');
         
         // Isolate Gemini from the codebase unless it's a mission
-        // A mission is defined by having approvalMode AND yolo enabled
-        const isMission = options.approvalMode === 'auto_edit' && options.yolo;
-        const cwd = isMission ? config.paths.root : config.paths.uploads;
+        const isCurrentlyMission = overrideOptions.yolo || isMission;
+        const cwd = isCurrentlyMission ? config.paths.root : config.paths.uploads;
 
         return spawn('gemini', [...args, ...extraArgs], {
             cwd: cwd,
@@ -51,11 +49,14 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         });
     };
 
+    const isMission = options.yolo;
+    const finalApprovalMode = isMission ? 'yolo' : options.approvalMode;
+
     let gemini = run([
         '--prompt', immersivePrompt,
         '--resume', 'latest',
         '--output-format', 'text',
-        '--approval-mode', options.approvalMode
+        '--approval-mode', finalApprovalMode
     ], options);
 
     // Add a 45-second safety timeout to prevent investigation hangs
@@ -122,7 +123,7 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 gemini = run([
                     '--prompt', message,
                     '--output-format', 'text',
-                    '--approval-mode', options.approvalMode
+                    '--approval-mode', finalApprovalMode
                 ]);
                 global.activeProcesses[chatId] = gemini;
                 setupListeners(gemini);
