@@ -18,7 +18,11 @@ const handlers = {
     },
 
     help: (ctx) => {
-        ctx.reply(MESSAGES.HELP_TEXT, {
+        const helpMsg = `${MESSAGES.HELP_TEXT}\n\n` +
+                       `🌐 <b>Archive Uplink</b>\n` +
+                       `Dashboard: <a href="https://${config.surge.domain}">The Collective Index</a>`;
+
+        ctx.reply(helpMsg, {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [

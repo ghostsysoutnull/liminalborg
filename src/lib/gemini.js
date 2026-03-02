@@ -41,6 +41,7 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         if (overrideOptions.yolo) extraArgs.push('--yolo');
         
         // Isolate Gemini from the codebase unless it's a mission
+        // A mission is defined by having approvalMode AND yolo enabled
         const isMission = options.approvalMode === 'auto_edit' && options.yolo;
         const cwd = isMission ? config.paths.root : config.paths.uploads;
 
