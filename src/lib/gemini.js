@@ -6,7 +6,7 @@ const { escapeHtml } = require('./utils');
 
 const simulation = require('./simulation');
 
-async function runGemini(message, ctx) {
+async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) {
     const chatId = ctx.chat.id;
     logger.info({ chatId, message }, 'Running Gemini');
 
@@ -21,11 +21,12 @@ async function runGemini(message, ctx) {
         logger.error(e, 'Error sending wait message');
     }
 
-    const run = (args) => {
+    const run = (args, overrideOptions = {}) => {
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
         if (settings.temperature) extraArgs.push('--temperature', settings.temperature.toString());
         if (settings.topP) extraArgs.push('--top-p', settings.topP.toString());
+        if (overrideOptions.yolo) extraArgs.push('--yolo');
         
         return spawn('gemini', [...args, ...extraArgs], {
             cwd: config.paths.root,
@@ -37,8 +38,8 @@ async function runGemini(message, ctx) {
         '--prompt', message,
         '--resume', 'latest',
         '--output-format', 'text',
-        '--approval-mode', 'default'
-    ]);
+        '--approval-mode', options.approvalMode
+    ], options);
 
     global.activeProcesses[chatId] = gemini;
 
@@ -96,7 +97,7 @@ async function runGemini(message, ctx) {
                 gemini = run([
                     '--prompt', message,
                     '--output-format', 'text',
-                    '--approval-mode', 'default'
+                    '--approval-mode', options.approvalMode
                 ]);
                 global.activeProcesses[chatId] = gemini;
                 setupListeners(gemini);
@@ -118,6 +119,9 @@ async function runGemini(message, ctx) {
                 .replace(/^YOLO mode is enabled.*$/gm, '')
                 .replace(/^Loaded cached credentials.*$/gm, '')
                 .replace(/^.*\[y\/N\].*$/gm, '')
+                .replace(/I will use `.*` to .*/g, '') // Strip tool thought logs
+                .replace(/Suggesting tool call: \{[\s\S]*?\}/g, '') // Strip raw tool suggestions
+                .replace(/\{[\s\S]*?"tool_calls":[\s\S]*?\}/g, '') // Strip JSON tool calls
                 .trim();
 
             if (cleanOutput) {
@@ -131,7 +135,7 @@ async function runGemini(message, ctx) {
                 const err = stderr.trim() || 'Process interrupted';
                 logger.error({ chatId, code, err }, 'Gemini process failed');
                 await ctx.reply(`⚠️ <b>Gemini error (Code ${code}):</b>\n<pre>${escapeHtml(err.substring(0, 500))}</pre>`, { parse_mode: 'HTML' }).catch(() => {});
-            } else if (!approvalSent) {
+            } else if (!approvalSent && options.approvalMode === 'plan') {
                 await ctx.reply('Gemini finished but returned no output.');
             }
             resolve();
