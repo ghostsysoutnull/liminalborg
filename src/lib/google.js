@@ -5,7 +5,7 @@ const config = require('../config');
 const logger = require('../config/logger');
 
 const TOKEN_PATH = path.join(config.paths.root, 'data', 'google_tokens.json');
-const REFS_PATH = path.join(config.paths.root, 'data', 'drive_refs.json');
+const REFS_PATH = path.join(config.homeDir, 'nexus/research/drive_refs.json');
 
 class GoogleManager {
     constructor() {
