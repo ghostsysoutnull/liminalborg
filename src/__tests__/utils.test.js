@@ -3,9 +3,9 @@ const { escapeHtml, robustParse } = require('../lib/utils');
 
 describe('Utility Core', () => {
     describe('escapeHtml', () => {
-        it('should escape HTML special characters', () => {
-            const input = '<b> "Me & You" <script>';
-            const expected = '&lt;b&gt; "Me &amp; You" &lt;script&gt;';
+        it('should escape HTML special characters including quotes', () => {
+            const input = '<b> "Me & You" <script>\'';
+            const expected = '&lt;b&gt; &quot;Me &amp; You&quot; &lt;script&gt;&#039;';
             expect(escapeHtml(input)).toBe(expected);
         });
 
