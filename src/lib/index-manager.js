@@ -35,6 +35,27 @@ class IndexManager {
         } catch (e) {
             logger.error(e, 'Failed to trigger Google Drive sync for dashboard');
         }
+
+        // Option 3: Trigger Surge Deployment (Ghost Node)
+        try {
+            await this._syncToWeb();
+        } catch (e) {
+            logger.error(e, 'Failed to trigger web synchronization');
+        }
+    }
+
+    async _syncToWeb() {
+        const { spawn } = require('child_process');
+        logger.info('Uplinking to Ghost Node (Surge)...');
+        
+        const deployScript = path.join(config.paths.scripts, 'deploy_dashboard.js');
+        const deployProc = spawn('node', [deployScript], {
+            cwd: config.paths.root,
+            env: config.rawEnv
+        });
+
+        deployProc.stdout.on('data', (data) => logger.debug(`[Deploy] ${data.toString().trim()}`));
+        deployProc.stderr.on('data', (data) => logger.error(`[Deploy Error] ${data.toString().trim()}`));
     }
 
     async _loadIndex() {

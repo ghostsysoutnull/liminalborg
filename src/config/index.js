@@ -21,6 +21,10 @@ const config = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost'
   },
+  surge: {
+    token: process.env.SURGE_TOKEN,
+    domain: process.env.SURGE_DOMAIN
+  },
   paths: {
     root: rootDir,
     logs: path.join(rootDir, 'data', 'logs'),
