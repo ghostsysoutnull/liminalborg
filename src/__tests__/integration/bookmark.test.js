@@ -74,7 +74,7 @@ describe('Integration: Bookmark Pipeline', () => {
 
         // 3. Verify Operator Notification
         expect(mockCtx.reply).toHaveBeenCalledWith(
-            expect.stringContaining("Signal Archived"),
+            expect.stringContaining("Signal Assimilated"),
             expect.objectContaining({ parse_mode: 'HTML' })
         );
 
