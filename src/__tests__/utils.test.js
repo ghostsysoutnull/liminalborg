@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-const { escapeHtml, robustParse } = require('../lib/utils');
+const { escapeHtml, robustParse, formatHelp } = require('../lib/utils');
 
 describe('Utility Core', () => {
     describe('escapeHtml', () => {
@@ -46,6 +46,16 @@ more noise`;
         it('should fail if required key is missing', () => {
             const input = '{"wrong_key": 1}';
             expect(() => robustParse(input, 'requiredKey')).toThrow('Required key "requiredKey" missing from harvested object');
+        });
+    });
+
+    describe('formatHelp', () => {
+        it('should append the Archive Uplink to any help text', () => {
+            const input = "Test Section";
+            const result = formatHelp(input);
+            expect(result).toContain(input);
+            expect(result).toContain('🌐 <b>Archive Uplink</b>');
+            expect(result).toContain('borg-archives-77.surge.sh');
         });
     });
 });

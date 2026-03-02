@@ -3,7 +3,7 @@ const path = require('path');
 const config = require('../config');
 const logger = require('../config/logger');
 const { MESSAGES, utils } = require('./constants');
-const { escapeHtml } = require('./utils');
+const { escapeHtml, formatHelp } = require('./utils');
 
 const googleManager = require('./google');
 const twitterManager = require('./twitter');
@@ -18,11 +18,7 @@ const handlers = {
     },
 
     help: (ctx) => {
-        const helpMsg = `${MESSAGES.HELP_TEXT}\n\n` +
-                       `🌐 <b>Archive Uplink</b>\n` +
-                       `Dashboard: <a href="https://${config.surge.domain}">The Collective Index</a>`;
-
-        ctx.reply(helpMsg, {
+        ctx.reply(formatHelp(MESSAGES.HELP_TEXT), {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [

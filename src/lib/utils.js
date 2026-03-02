@@ -83,8 +83,19 @@ async function downloadFile(url, destPath, timeout = 60000) {
     });
 }
 
+/**
+ * Formats a help response by appending global UI decorators (like the Archive link).
+ */
+function formatHelp(text) {
+    const config = require('../config');
+    return `${text}\n\n` +
+           `🌐 <b>Archive Uplink</b>\n` +
+           `Dashboard: <a href="https://${config.surge.domain}">The Collective Index</a>`;
+}
+
 module.exports = {
     escapeHtml,
     robustParse,
-    downloadFile
+    downloadFile,
+    formatHelp
 };

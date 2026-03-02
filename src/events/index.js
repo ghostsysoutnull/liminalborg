@@ -226,12 +226,9 @@ const handlers = {
     help_section: async (ctx) => {
         const section = ctx.match[1];
         const text = MESSAGES.HELP_SECTIONS[section] || 'Section not found.';
+        const { formatHelp } = require('../lib/utils');
         
-        const helpMsg = `⬛ <b>Collective Terminal: Interface</b>\n\n${text}\n\n` +
-                       `🌐 <b>Archive Uplink</b>\n` +
-                       `Dashboard: <a href="https://${config.surge.domain}">The Collective Index</a>`;
-
-        await ctx.editMessageText(helpMsg, {
+        await ctx.editMessageText(formatHelp(text), {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
@@ -242,11 +239,8 @@ const handlers = {
     },
 
     help_root: async (ctx) => {
-        const helpMsg = `${MESSAGES.HELP_TEXT}\n\n` +
-                       `🌐 <b>Archive Uplink</b>\n` +
-                       `Dashboard: <a href="https://${config.surge.domain}">The Collective Index</a>`;
-
-        await ctx.editMessageText(helpMsg, {
+        const { formatHelp } = require('../lib/utils');
+        await ctx.editMessageText(formatHelp(MESSAGES.HELP_TEXT), {
             parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
