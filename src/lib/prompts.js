@@ -67,8 +67,22 @@ function getReflectionPrompt(activitySummary, historyContext, mode) {
     `;
 }
 
+const BOOKMARK_EXTRACTION_PROMPT = `
+If the USER_SIGNAL contains a URL, you MUST append a JSON block at the end of your response with the following schema:
+{
+  "uri": "The exact URL",
+  "subject": "A concise title for the link",
+  "category": "One word category (e.g., Tech, Music, Research, News)",
+  "labels": ["#tag1", "#tag2"],
+  "technical_summary": "A 1-2 sentence non-persona summary of the content",
+  "persona_note": "A 1-sentence cryptic Borg-style note about the link"
+}
+IMPORTANT: Ensure the JSON is valid and distinct from your conversational response.
+`;
+
 module.exports = {
     PERSONA_GUIDELINES,
+    BOOKMARK_EXTRACTION_PROMPT,
     DARK_DICTIONARY,
     translateToBorg,
     getReflectionPrompt

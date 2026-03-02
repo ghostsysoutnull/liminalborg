@@ -5,6 +5,7 @@ const config = require('../config');
 const logger = require('../config/logger');
 
 const TOKEN_PATH = path.join(config.paths.root, 'data', 'google_tokens.json');
+const REFS_PATH = path.join(config.paths.root, 'data', 'drive_refs.json');
 
 class GoogleManager {
     constructor() {
@@ -98,6 +99,56 @@ class GoogleManager {
         return response.data;
     }
 
+    async syncDashboard(filePath) {
+        const fileName = 'COLLECTIVE_INDEX.html';
+        const mimeType = 'text/html';
+
+        if (config.shadowMode) {
+            return logger.info('SHADOW_MODE: Mocking dashboard sync');
+        }
+        if (!this.isAuthorized) throw new Error('Not authorized with Google');
+
+        const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+        const fsStream = require('fs').createReadStream(filePath);
+
+        let refs = {};
+        try {
+            const data = await fs.readFile(REFS_PATH, 'utf8');
+            refs = JSON.parse(data);
+        } catch (e) {
+            logger.debug('No drive refs found, will create new ones.');
+        }
+
+        const fileId = refs.dashboardFileId;
+
+        if (fileId) {
+            logger.info({ fileId }, 'Updating existing dashboard on Drive');
+            await drive.files.update({
+                fileId: fileId,
+                media: {
+                    mimeType: mimeType,
+                    body: fsStream
+                }
+            });
+        } else {
+            logger.info('Creating new dashboard on Drive');
+            const response = await drive.files.create({
+                requestBody: {
+                    name: fileName,
+                    mimeType: mimeType
+                },
+                media: {
+                    mimeType: mimeType,
+                    body: fsStream
+                }
+            });
+            
+            refs.dashboardFileId = response.data.id;
+            await fs.writeFile(REFS_PATH, JSON.stringify(refs, null, 2));
+            logger.info({ fileId: response.data.id }, 'New dashboard created and ref saved');
+        }
+    }
+
     async postBlog(title, content) {
         if (config.shadowMode) {
             logger.info({ title }, 'SHADOW_MODE: Mocking blog post');
@@ -106,16 +157,12 @@ class GoogleManager {
         if (!this.isAuthorized) throw new Error('Not authorized with Google');
         
         const blogger = google.blogger({ version: 'v3', auth: this.oauth2Client });
-        
-        // 1. Get the list of blogs to find the primary blog ID
         const blogs = await blogger.blogs.listByUser({ userId: 'self' });
         if (!blogs.data.items || blogs.data.items.length === 0) {
             throw new Error('No blogs found for this account. Please create a blog first.');
         }
 
         const blogId = blogs.data.items[0].id;
-        
-        // 2. Create the post
         const post = await blogger.posts.insert({
             blogId: blogId,
             requestBody: {
@@ -132,7 +179,6 @@ class GoogleManager {
         if (!this.isAuthorized) throw new Error('Not authorized with Google');
         
         const fs = require('fs').promises;
-        // Correct path to asset
         const templatePath = path.join(__dirname, '../../plans/google-workspace/assets/terminal_template.html');
         let template = await fs.readFile(templatePath, 'utf8');
         

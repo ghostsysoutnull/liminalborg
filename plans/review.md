@@ -52,5 +52,17 @@ The system has been refactored to align with the "Centralized Configuration" man
 - **Reproduction**: ✅ PASSED. Manual CLI testing confirms fast, clean, and immersive Borg responses for X links.
 - **Automated Tests**: ✅ PASSED (34/34).
 
+## 🛰️ Addendum: The Collective Index (2026-03-02)
+
+### 1. Architectural Integrity
+- **Extraction**: ✅ PASSED. `src/lib/gemini.js` now uses dual-payload logic with `robustParse` to ingest structured metadata.
+- **Database**: ✅ PASSED. `src/lib/index-manager.js` implements a clean JSON storage + HTML rendering pipeline.
+- **Uplink**: ✅ PASSED. `src/lib/google.js:syncDashboard` implements stateful synchronization via `data/drive_refs.json` to prevent file duplication.
+
+### 2. Performance & Security
+- **Blocking Calls**: ✅ PASSED. All file I/O and API calls are asynchronous.
+- **Sanitization**: ✅ PASSED. Output cleaning correctly strips technical JSON artifacts before user delivery.
+- **Hygiene**: ✅ PASSED. Sentinel scan confirms no sensitive data leakage in new scripts or indices.
+
 ---
 *Audit conducted and remediated by Gemini CLI Agent.*

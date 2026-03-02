@@ -2,8 +2,8 @@ const { spawn } = require('child_process');
 const config = require('../config');
 const logger = require('../config/logger');
 const { MESSAGES } = require('./constants');
-const { escapeHtml } = require('./utils');
-const { PERSONA_GUIDELINES } = require('./prompts');
+const { escapeHtml, robustParse } = require('./utils');
+const { PERSONA_GUIDELINES, BOOKMARK_EXTRACTION_PROMPT } = require('./prompts');
 
 const simulation = require('./simulation');
 
@@ -12,9 +12,17 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
     
     // Explicitly forbid tools for standard chat to prevent loops
     const strictConstraints = "STRICT COMMAND: DO NOT USE TOOLS. DO NOT SEARCH. DO NOT READ FILES. OUTPUT ONLY THE BORG RESPONSE.";
-    const immersivePrompt = `${strictConstraints}\n\n${PERSONA_GUIDELINES}\n\nUSER_SIGNAL: "${message}"`;
     
-    logger.info({ chatId, message }, 'Running Gemini');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const hasUrl = urlRegex.test(message);
+    
+    let immersivePrompt = `${strictConstraints}\n\n${PERSONA_GUIDELINES}\n\nUSER_SIGNAL: "${message}"`;
+    
+    if (hasUrl) {
+        immersivePrompt += `\n\n${BOOKMARK_EXTRACTION_PROMPT}`;
+    }
+    
+    logger.info({ chatId, message, hasUrl }, 'Running Gemini');
 
     if (config.shadowMode) {
         return simulation.mockGeminiResponse(message, ctx).catch(e => logger.error(e, 'Error sending mock response'));
@@ -132,6 +140,17 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 await ctx.telegram.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
             }
 
+            // Extract potential bookmark metadata if a URL was involved
+            let bookmarkMetadata = null;
+            if (hasUrl) {
+                try {
+                    bookmarkMetadata = robustParse(stdout, 'uri');
+                    logger.info({ chatId, bookmarkMetadata }, 'Bookmark metadata extracted');
+                } catch (e) {
+                    logger.debug({ chatId, error: e.message }, 'No bookmark metadata found in output');
+                }
+            }
+
             let cleanOutput = stdout
                 .replace(/^YOLO mode is enabled.*$/gm, '')
                 .replace(/^Loaded cached credentials.*$/gm, '')
@@ -143,6 +162,7 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 .replace(/Attempting .*/g, '')
                 .replace(/Suggesting tool call: \{[\s\S]*?\}/g, '')
                 .replace(/\{[\s\S]*?"tool_calls":[\s\S]*?\}/g, '')
+                .replace(/\{[\s\S]*?"uri":[\s\S]*?\}/g, '') // Strip the bookmark JSON
                 .trim();
 
             if (cleanOutput) {
@@ -152,11 +172,23 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                         await ctx.reply(`<pre>${escapeHtml(part)}</pre>`, { parse_mode: 'HTML' }).catch(e => logger.error(e, 'Error sending response part'));
                     }
                 }
-            } else if (code !== 0 && code !== null) {
+            }
+
+            // Phase 2: If we have a bookmark, process it
+            if (bookmarkMetadata) {
+                try {
+                    const indexManager = require('./index-manager');
+                    await indexManager.processBookmark(bookmarkMetadata, ctx);
+                } catch (e) {
+                    logger.error(e, 'Failed to process bookmark');
+                }
+            }
+
+            if (!cleanOutput && code !== 0 && code !== null) {
                 const err = stderr.trim() || 'Process interrupted';
                 logger.error({ chatId, code, err }, 'Gemini process failed');
                 await ctx.reply(`⚠️ <b>Gemini error (Code ${code}):</b>\n<pre>${escapeHtml(err.substring(0, 500))}</pre>`, { parse_mode: 'HTML' }).catch(() => {});
-            } else if (!approvalSent && options.approvalMode === 'plan') {
+            } else if (!cleanOutput && !approvalSent && options.approvalMode === 'plan') {
                 await ctx.reply('Gemini finished but returned no output.');
             }
             resolve();
