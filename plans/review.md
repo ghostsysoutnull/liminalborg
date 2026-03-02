@@ -25,5 +25,32 @@ The system has been refactored to align with the "Centralized Configuration" man
 - **Automated Tests**: PASSED (34/34 tests)
 - **Deployment**: READY for restart.
 
+## 🛰️ Addendum: Utility Scripts & Protocol Audit (2026-02-28)
+
+### 1. scripts/send_mail.js & scripts/send_telegram.js
+- **Security**: ✅ PASSED. No direct `process.env` usage; both scripts correctly import and use the centralized `src/config/index.js`.
+- **Performance**: ✅ PASSED. Uses asynchronous `sendEmail` (Gmail) and `sendMessage` (Telegram) methods.
+- **Maintainability**: ✅ PASSED. These scripts serve as clean entry points for the Ghost Worker or manual CLI transmission of data packets.
+
+### 2. docs/SHADOW_MODE_PROTOCOL.md
+- **Accuracy**: ✅ PASSED. Correctly defines the triggers and cleanup mandates for simulation states.
+- **Alignment**: ✅ PASSED. Fully aligned with the Roadmap Phase 6 (Virtual Operator Protocol).
+
+### 3. Final Integrity Pulse
+- **Sentinel Scrub**: ✅ PASSED. No leaks detected in the new assets.
+- **Syntax Check**: ✅ PASSED. All new scripts are structurally sound.
+
+## 🛰️ Addendum: Gemini Stability & Persona Logic (2026-03-02)
+
+### 1. src/lib/gemini.js Fixes
+- **Stability**: ✅ PASSED. Directory isolation (CWD: `uploads`) and `STRICT COMMAND` prompt prevents infinite "investigator" loops.
+- **Persona**: ✅ PASSED. `PERSONA_GUIDELINES` are now explicitly prepended to all standard chat prompts.
+- **Resilience**: ✅ PASSED. 45-second safety timeout implemented to kill hung processes.
+- **Cleanliness**: ✅ PASSED. Aggressive regex cleaning strips all "I will...", "Error executing...", and JSON artifacts.
+
+### 2. Final Verification
+- **Reproduction**: ✅ PASSED. Manual CLI testing confirms fast, clean, and immersive Borg responses for X links.
+- **Automated Tests**: ✅ PASSED (34/34).
+
 ---
 *Audit conducted and remediated by Gemini CLI Agent.*

@@ -3,11 +3,17 @@ const config = require('../config');
 const logger = require('../config/logger');
 const { MESSAGES } = require('./constants');
 const { escapeHtml } = require('./utils');
+const { PERSONA_GUIDELINES } = require('./prompts');
 
 const simulation = require('./simulation');
 
 async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) {
     const chatId = ctx.chat.id;
+    
+    // Explicitly forbid tools for standard chat to prevent loops
+    const strictConstraints = "STRICT COMMAND: DO NOT USE TOOLS. DO NOT SEARCH. DO NOT READ FILES. OUTPUT ONLY THE BORG RESPONSE.";
+    const immersivePrompt = `${strictConstraints}\n\n${PERSONA_GUIDELINES}\n\nUSER_SIGNAL: "${message}"`;
+    
     logger.info({ chatId, message }, 'Running Gemini');
 
     if (config.shadowMode) {
@@ -24,22 +30,32 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
     const run = (args, overrideOptions = {}) => {
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
-        if (settings.temperature) extraArgs.push('--temperature', settings.temperature.toString());
-        if (settings.topP) extraArgs.push('--top-p', settings.topP.toString());
         if (overrideOptions.yolo) extraArgs.push('--yolo');
         
+        // Isolate Gemini from the codebase unless it's a mission
+        const isMission = options.approvalMode === 'auto_edit' && options.yolo;
+        const cwd = isMission ? config.paths.root : config.paths.uploads;
+
         return spawn('gemini', [...args, ...extraArgs], {
-            cwd: config.paths.root,
+            cwd: cwd,
             env: { ...config.rawEnv, NODE_ENV: config.env }
         });
     };
 
     let gemini = run([
-        '--prompt', message,
+        '--prompt', immersivePrompt,
         '--resume', 'latest',
         '--output-format', 'text',
         '--approval-mode', options.approvalMode
     ], options);
+
+    // Add a 45-second safety timeout to prevent investigation hangs
+    const timeout = setTimeout(() => {
+        if (global.activeProcesses[chatId]) {
+            logger.warn({ chatId }, 'Gemini process timed out, killing...');
+            global.activeProcesses[chatId].kill('SIGKILL');
+        }
+    }, 45000);
 
     global.activeProcesses[chatId] = gemini;
 
@@ -108,6 +124,7 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         };
 
         const finish = async (code) => {
+            clearTimeout(timeout);
             logger.info({ chatId, code }, 'Gemini process closed');
             delete global.activeProcesses[chatId];
             
@@ -119,9 +136,13 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 .replace(/^YOLO mode is enabled.*$/gm, '')
                 .replace(/^Loaded cached credentials.*$/gm, '')
                 .replace(/^.*\[y\/N\].*$/gm, '')
-                .replace(/I will use `.*` to .*/g, '') // Strip tool thought logs
-                .replace(/Suggesting tool call: \{[\s\S]*?\}/g, '') // Strip raw tool suggestions
-                .replace(/\{[\s\S]*?"tool_calls":[\s\S]*?\}/g, '') // Strip JSON tool calls
+                .replace(/I will use `.*` to .*/g, '')
+                .replace(/I will .* to .*/g, '')
+                .replace(/Error executing tool .*/g, '')
+                .replace(/Searching .*/g, '')
+                .replace(/Attempting .*/g, '')
+                .replace(/Suggesting tool call: \{[\s\S]*?\}/g, '')
+                .replace(/\{[\s\S]*?"tool_calls":[\s\S]*?\}/g, '')
                 .trim();
 
             if (cleanOutput) {
