@@ -44,13 +44,28 @@ class IndexManager {
     async _syncToWeb() {
         const { spawn } = require('child_process');
         logger.info('Uplinking to Ghost Node (Surge)...');
+        
         const deployScript = path.join(config.paths.scripts, 'deploy_dashboard.js');
-        const deployProc = spawn('node', [deployScript], {
-            cwd: config.paths.root,
-            env: config.rawEnv
+        
+        return new Promise((resolve, reject) => {
+            const deployProc = spawn('node', [deployScript], {
+                cwd: config.paths.root,
+                env: config.rawEnv
+            });
+
+            deployProc.stdout.on('data', (data) => logger.debug(`[Deploy] ${data.toString().trim()}`));
+            deployProc.stderr.on('data', (data) => logger.error(`[Deploy Error] ${data.toString().trim()}`));
+
+            deployProc.on('close', (code) => {
+                if (code === 0) {
+                    logger.info('Ghost Node Uplink successful');
+                    resolve();
+                } else {
+                    logger.error({ code }, 'Ghost Node Uplink failed');
+                    reject(new Error(`Deploy script failed with code ${code}`));
+                }
+            });
         });
-        deployProc.stdout.on('data', (data) => logger.debug(`[Deploy] ${data.toString().trim()}`));
-        deployProc.stderr.on('data', (data) => logger.error(`[Deploy Error] ${data.toString().trim()}`));
     }
 
     async _loadIndex() {

@@ -16,6 +16,9 @@ describe('Integration: Bookmark Pipeline', () => {
         // Mock googleManager before each test
         initSpy = vi.spyOn(googleManager, 'init').mockResolvedValue(true);
         syncSpy = vi.spyOn(googleManager, 'syncDashboard').mockResolvedValue(true);
+        
+        // Mock the internal _syncToWeb to prevent real spawn during test
+        vi.spyOn(indexManager, '_syncToWeb').mockResolvedValue(true);
 
         // Backup existing index if it exists
         try {
