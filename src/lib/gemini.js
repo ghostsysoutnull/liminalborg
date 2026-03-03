@@ -11,7 +11,8 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
     const chatId = ctx.chat.id;
     
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const hasUrl = urlRegex.test(message);
+    const urls = message.match(urlRegex);
+    const hasUrl = urls && urls.length > 0;
     
     logger.info({ chatId, message, hasUrl }, 'Running Gemini');
 
@@ -34,8 +35,8 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
         
-        // Missions and URL Research use root to access tools/search.
         // Standard text analysis is isolated to uploads.
+        // Missions and URL Research use root to access tools/search.
         const cwd = isMission ? config.paths.root : config.paths.uploads;
 
         return spawn('gemini', [...args, ...extraArgs], {
@@ -62,20 +63,10 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         '--approval-mode', finalApprovalMode
     ], options);
 
-    // Safety timeout
-    const timeoutVal = isMission ? 120000 : 60000;
-    const timeout = setTimeout(() => {
-        if (global.activeProcesses[chatId]) {
-            logger.warn({ chatId }, 'Gemini process timed out, killing...');
-            global.activeProcesses[chatId].kill('SIGKILL');
-        }
-    }, timeoutVal);
-
-    global.activeProcesses[chatId] = gemini;
-
     let stdout = '';
     let stderr = '';
     let approvalSent = false;
+    let fallbackTriggered = false;
     const MAX_OUTPUT_SIZE = 1024 * 1024; 
 
     const setupListeners = (proc) => {
@@ -100,8 +91,14 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
     setupListeners(gemini);
 
     return new Promise((resolve) => {
-        const handleClose = async (code) => {
+        const finish = async (code) => {
             clearTimeout(timeout);
+            if (fallbackTimeout) clearTimeout(fallbackTimeout);
+
+            // If fallback was triggered, this 'finish' belongs to the original process being killed
+            // We ignore it and let the fallback process call finish
+            if (fallbackTriggered && code === null) return;
+
             logger.info({ chatId, code }, 'Gemini process closed');
             delete global.activeProcesses[chatId];
             
@@ -152,8 +149,53 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
             resolve();
         };
 
-        gemini.on('close', handleClose);
+        const handleClose = async (code) => {
+            if (code === 42 && stdout.includes('Error resuming session')) {
+                logger.warn({ chatId }, 'Resume failed, retrying without resume');
+                stdout = '';
+                stderr = '';
+                gemini = run([
+                    '--prompt', immersivePrompt,
+                    '--output-format', 'text',
+                    '--approval-mode', finalApprovalMode
+                ]);
+                global.activeProcesses[chatId] = gemini;
+                setupListeners(gemini);
+                gemini.on('close', (newCode) => finish(newCode));
+                return;
+            }
+            await finish(code);
+        };
 
+        const fallbackTimeout = hasUrl ? setTimeout(async () => {
+            if (global.activeProcesses[chatId] && stdout.length === 0) {
+                logger.warn({ chatId }, 'Deep research taking too long, triggering fast fallback...');
+                fallbackTriggered = true;
+                global.activeProcesses[chatId].kill('SIGTERM');
+                
+                const fastPrompt = `STRICT COMMAND: DO NOT USE TOOLS. Provide a fast analysis of this URL based on the URI structure alone.\n\nURL: ${message}\n\n${BOOKMARK_EXTRACTION_PROMPT}`;
+                const fastGemini = run([
+                    '--prompt', fastPrompt,
+                    '--output-format', 'text',
+                    '--approval-mode', 'auto_edit'
+                ]);
+                global.activeProcesses[chatId] = fastGemini;
+                setupListeners(fastGemini);
+                fastGemini.on('close', (code) => finish(code));
+            }
+        }, 30000) : null;
+
+        // Safety timeout
+        const timeoutVal = isMission ? 120000 : 60000;
+        const timeout = setTimeout(() => {
+            if (global.activeProcesses[chatId]) {
+                logger.warn({ chatId }, 'Gemini process timed out, killing...');
+                global.activeProcesses[chatId].kill('SIGKILL');
+            }
+        }, timeoutVal);
+
+        global.activeProcesses[chatId] = gemini;
+        gemini.on('close', handleClose);
         gemini.on('error', (err) => {
             logger.error(err, 'Failed to start Gemini process');
             resolve();
