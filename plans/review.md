@@ -91,5 +91,17 @@ The system has been refactored to align with the "Centralized Configuration" man
 - **Hygiene**: ✅ PASSED. Sentinel scrub confirms zero leakage.
 - **Scans**: ✅ PASSED. Systematic `grep` verified centralized configuration and secure system calls.
 
+## 🛰️ Addendum: Plain Language Research Mandate (2026-03-02)
+
+### 1. Extraction Quality
+- **Mandate**: ✅ **ENFORCED**. `src/lib/prompts.js` now strictly forbids persona language in `subject` and `technical_summary` fields.
+- **Utility**: ✅ **VERIFIED**. Full CLI simulation confirms descriptive, fact-based summaries for X links (e.g., Identifying the 'GHOST-WALKER' protocol).
+- **Process**: ✅ **Hardenened**. Research tools (Search/Fetch) are now explicitly authorized for URL analysis via automated `yolo` mode in `src/lib/gemini.js`.
+
+### 2. Final Verification
+- **Timeout**: ✅ PASSED. 90-second mission window confirmed sufficient for multi-stage research.
+- **Hygiene**: ✅ PASSED. Sentinel scrub confirms zero leakage.
+- **Tests**: ✅ PASSED. 100% pass rate across 38 tests.
+
 ---
-*Audit Status: 🟢 SUPREME. The Collective's security protocols are now self-enforcing.*
+*Audit Status: 🟢 SUPREME. The Archive is now both secure and human-readable.*

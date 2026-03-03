@@ -34,7 +34,8 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
         
-        // Standard runs use uploads, Missions (including URL research) use root
+        // Missions and URL Research use root to access tools/search.
+        // Standard text analysis is isolated to uploads.
         const cwd = isMission ? config.paths.root : config.paths.uploads;
 
         return spawn('gemini', [...args, ...extraArgs], {
@@ -100,24 +101,6 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
 
     return new Promise((resolve) => {
         const handleClose = async (code) => {
-            if (code === 42 && stdout.includes('Error resuming session')) {
-                logger.warn({ chatId }, 'Resume failed, retrying without resume');
-                stdout = '';
-                stderr = '';
-                gemini = run([
-                    '--prompt', immersivePrompt,
-                    '--output-format', 'text',
-                    '--approval-mode', finalApprovalMode
-                ]);
-                global.activeProcesses[chatId] = gemini;
-                setupListeners(gemini);
-                gemini.on('close', (newCode) => finish(newCode));
-                return;
-            }
-            await finish(code);
-        };
-
-        const finish = async (code) => {
             clearTimeout(timeout);
             logger.info({ chatId, code }, 'Gemini process closed');
             delete global.activeProcesses[chatId];
@@ -155,8 +138,12 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
             }
 
             if (bookmarkMetadata) {
-                const indexManager = require('./index-manager');
-                await indexManager.processBookmark(bookmarkMetadata, ctx);
+                try {
+                    const indexManager = require('./index-manager');
+                    await indexManager.processBookmark(bookmarkMetadata, ctx);
+                } catch (e) {
+                    logger.error(e, 'Failed to process bookmark');
+                }
             }
 
             if (!cleanOutput && code !== 0 && code !== null) {

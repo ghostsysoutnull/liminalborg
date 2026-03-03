@@ -68,21 +68,20 @@ function getReflectionPrompt(activitySummary, historyContext, mode) {
 }
 
 const BOOKMARK_EXTRACTION_PROMPT = `
-If the USER_SIGNAL contains a URL (especially X.com/Twitter), you MUST attempt to find its specific content.
-1. Use your search tool to find the text of the post or context (e.g., search for "tweet status [ID] text").
-2. If direct search is insufficient, search for quotes or news related to the content of the URL.
-
-Your technical_summary must describe the ACTUAL facts or topics mentioned in the content (e.g., "The tweet discusses a new AI model release by OpenAI"). 
-DO NOT use vague phrases like "External Signal" or "discrete data point."
+MANDATORY INSTRUCTIONS FOR URL ANALYSIS:
+1. You MUST research the content of the URL using your tools (search/fetch).
+2. The 'subject' and 'technical_summary' MUST be written in plain, professional human language.
+3. ABSOLUTELY NO PERSONA, NO CRYPTIC LANGUAGE, AND NO BORG TERMS in 'subject' or 'technical_summary'.
+4. 'technical_summary' must be 2-3 sentences explaining the ACTUAL content found at the link.
 
 JSON SCHEMA:
 {
   "uri": "The exact URL",
-  "subject": "A clear title describing the TOPIC (e.g., 'OpenAI Sora Update')",
-  "category": "The selected category from our taxonomy",
-  "labels": ["#specific_tag1", "#specific_tag2"],
-  "technical_summary": "A 2-3 sentence PLAIN LANGUAGE description of what the content actually says. NO persona language.",
-  "persona_note": "A 1-sentence cryptic Borg-style note (Persona permitted here)"
+  "subject": "Human-readable title (e.g., 'OpenAI Sora Release News')",
+  "category": "Selected from taxonomy",
+  "labels": ["#specific", "#tags"],
+  "technical_summary": "Plain human description of the facts found in the link. No Borg speak.",
+  "persona_note": "You may use your Borg persona ONLY here."
 }
 `;
 
