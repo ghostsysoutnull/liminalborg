@@ -10,17 +10,8 @@ const simulation = require('./simulation');
 async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) {
     const chatId = ctx.chat.id;
     
-    // Explicitly forbid tools for standard chat to prevent loops
-    const strictConstraints = "STRICT COMMAND: DO NOT USE TOOLS. DO NOT SEARCH. DO NOT READ FILES. OUTPUT ONLY THE BORG RESPONSE.";
-    
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const hasUrl = urlRegex.test(message);
-    
-    let immersivePrompt = `${strictConstraints}\n\n${PERSONA_GUIDELINES}\n\nUSER_SIGNAL: "${message}"`;
-    
-    if (hasUrl) {
-        immersivePrompt += `\n\n${BOOKMARK_EXTRACTION_PROMPT}`;
-    }
     
     logger.info({ chatId, message, hasUrl }, 'Running Gemini');
 
@@ -35,13 +26,16 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         logger.error(e, 'Error sending wait message');
     }
 
+    // A mission is defined by having yolo explicitly enabled OR a URL is detected (for research)
+    const isMission = options.yolo === true || hasUrl;
+    const finalApprovalMode = isMission ? 'yolo' : options.approvalMode;
+
     const run = (args, overrideOptions = {}) => {
         const settings = global.chatSettings[chatId] || {};
         const extraArgs = [];
         
-        // Isolate Gemini from the codebase unless it's a mission
-        const isCurrentlyMission = overrideOptions.yolo || isMission;
-        const cwd = isCurrentlyMission ? config.paths.root : config.paths.uploads;
+        // Standard runs use uploads, Missions (including URL research) use root
+        const cwd = isMission ? config.paths.root : config.paths.uploads;
 
         return spawn('gemini', [...args, ...extraArgs], {
             cwd: cwd,
@@ -49,8 +43,16 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         });
     };
 
-    const isMission = options.yolo;
-    const finalApprovalMode = isMission ? 'yolo' : options.approvalMode;
+    // Standard prompts strictly forbid tools UNLESS a URL is detected for research
+    const strictConstraints = (isMission && !hasUrl) 
+        ? "" 
+        : "STRICT COMMAND: ONLY use tools if a URL is detected. Do NOT research the general conversation. OUTPUT ONLY THE BORG RESPONSE.";
+    
+    let immersivePrompt = `${strictConstraints}\n\n${PERSONA_GUIDELINES}\n\nUSER_SIGNAL: "${message}"`;
+    
+    if (hasUrl) {
+        immersivePrompt += `\n\n${BOOKMARK_EXTRACTION_PROMPT}`;
+    }
 
     let gemini = run([
         '--prompt', immersivePrompt,
@@ -59,57 +61,39 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
         '--approval-mode', finalApprovalMode
     ], options);
 
-    // Add a 45-second safety timeout to prevent investigation hangs
+    // Safety timeout
+    const timeoutVal = isMission ? 120000 : 60000;
     const timeout = setTimeout(() => {
         if (global.activeProcesses[chatId]) {
             logger.warn({ chatId }, 'Gemini process timed out, killing...');
             global.activeProcesses[chatId].kill('SIGKILL');
         }
-    }, 45000);
+    }, timeoutVal);
 
     global.activeProcesses[chatId] = gemini;
 
     let stdout = '';
     let stderr = '';
     let approvalSent = false;
-    const MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB limit
+    const MAX_OUTPUT_SIZE = 1024 * 1024; 
 
     const setupListeners = (proc) => {
         proc.stdout.on('data', async (data) => {
             const output = data.toString();
             if (stdout.length + output.length < MAX_OUTPUT_SIZE) {
                 stdout += output;
-            } else if (!stdout.endsWith('\n...[Output Truncated]')) {
-                stdout += '\n...[Output Truncated]';
             }
-
             if (!approvalSent && output.includes('[y/N]')) {
                 approvalSent = true;
-                logger.info({ chatId }, 'Tool approval requested');
-                try {
-                    await ctx.reply(MESSAGES.ACTION_REQUIRED, {
-                        parse_mode: 'HTML',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: '✅ Approve', callback_data: `approve_${chatId}` },
-                                    { text: '❌ Reject', callback_data: `reject_${chatId}` }
-                                ]
-                            ]
-                        }
-                    });
-                } catch (e) {
-                    logger.error(e, 'Error sending approval keyboard');
-                }
+                await ctx.reply(MESSAGES.ACTION_REQUIRED, {
+                    reply_markup: { inline_keyboard: [[
+                        { text: '✅ Approve', callback_data: `approve_${chatId}` },
+                        { text: '❌ Reject', callback_data: `reject_${chatId}` }
+                    ]] }
+                }).catch(() => {});
             }
         });
-
-        proc.stderr.on('data', (data) => {
-            const output = data.toString();
-            if (stderr.length + output.length < MAX_OUTPUT_SIZE) {
-                stderr += output;
-            }
-        });
+        proc.stderr.on('data', (data) => stderr += data.toString());
     };
 
     setupListeners(gemini);
@@ -121,7 +105,7 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 stdout = '';
                 stderr = '';
                 gemini = run([
-                    '--prompt', message,
+                    '--prompt', immersivePrompt,
                     '--output-format', 'text',
                     '--approval-mode', finalApprovalMode
                 ]);
@@ -142,14 +126,12 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 await ctx.telegram.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
             }
 
-            // Extract potential bookmark metadata if a URL was involved
             let bookmarkMetadata = null;
             if (hasUrl) {
                 try {
                     bookmarkMetadata = robustParse(stdout, 'uri');
-                    logger.info({ chatId, bookmarkMetadata }, 'Bookmark metadata extracted');
                 } catch (e) {
-                    logger.debug({ chatId, error: e.message }, 'No bookmark metadata found in output');
+                    logger.debug({ chatId }, 'No metadata extracted in standard run');
                 }
             }
 
@@ -162,36 +144,23 @@ async function runGemini(message, ctx, options = { approvalMode: 'auto_edit' }) 
                 .replace(/Error executing tool .*/g, '')
                 .replace(/Searching .*/g, '')
                 .replace(/Attempting .*/g, '')
-                .replace(/Suggesting tool call: \{[\s\S]*?\}/g, '')
-                .replace(/\{[\s\S]*?"tool_calls":[\s\S]*?\}/g, '')
-                .replace(/\{[\s\S]*?"uri":[\s\S]*?\}/g, '') // Strip the bookmark JSON
+                .replace(/\{[\s\S]*?"uri":[\s\S]*?\}/g, '') 
                 .trim();
 
             if (cleanOutput) {
                 const parts = cleanOutput.match(/[\s\S]{1,4000}/g) || [cleanOutput];
                 for (const part of parts) {
-                    if (part.trim()) {
-                        await ctx.reply(`<pre>${escapeHtml(part)}</pre>`, { parse_mode: 'HTML' }).catch(e => logger.error(e, 'Error sending response part'));
-                    }
+                    await ctx.reply(`<pre>${escapeHtml(part)}</pre>`, { parse_mode: 'HTML' }).catch(() => {});
                 }
             }
 
-            // Phase 2: If we have a bookmark, process it
             if (bookmarkMetadata) {
-                try {
-                    const indexManager = require('./index-manager');
-                    await indexManager.processBookmark(bookmarkMetadata, ctx);
-                } catch (e) {
-                    logger.error(e, 'Failed to process bookmark');
-                }
+                const indexManager = require('./index-manager');
+                await indexManager.processBookmark(bookmarkMetadata, ctx);
             }
 
             if (!cleanOutput && code !== 0 && code !== null) {
-                const err = stderr.trim() || 'Process interrupted';
-                logger.error({ chatId, code, err }, 'Gemini process failed');
-                await ctx.reply(`⚠️ <b>Gemini error (Code ${code}):</b>\n<pre>${escapeHtml(err.substring(0, 500))}</pre>`, { parse_mode: 'HTML' }).catch(() => {});
-            } else if (!cleanOutput && !approvalSent && options.approvalMode === 'plan') {
-                await ctx.reply('Gemini finished but returned no output.');
+                await ctx.reply(`⚠️ Gemini error (Code ${code})`).catch(() => {});
             }
             resolve();
         };

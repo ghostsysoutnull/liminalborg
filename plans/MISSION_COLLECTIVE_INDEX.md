@@ -28,6 +28,7 @@ Transform the Liminal Borg into an active data archivist by automatically bookma
 ## 📊 Progress Log
 - **2026-03-02**: Strategy approved by Operator. Mission Initialized.
 - **2026-03-02**: Mission Accomplished. The Collective Index is operational.
+- **2026-03-02**: Stabilized research logic. Reverted deep tool research for standard links to prevent 90s timeouts. Implemented "Fast Analysis" protocol.
 
 ---
 *Status: Synchronizing Staging Area. Ready for Phase 1.*

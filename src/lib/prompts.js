@@ -68,30 +68,22 @@ function getReflectionPrompt(activitySummary, historyContext, mode) {
 }
 
 const BOOKMARK_EXTRACTION_PROMPT = `
-If the USER_SIGNAL contains a URL, you MUST append a JSON block at the end of your response.
-Your analysis must be objective and descriptive. Do NOT use cryptic persona language in the 'subject' or 'technical_summary' fields.
+If the USER_SIGNAL contains a URL (especially X.com/Twitter), you MUST attempt to find its specific content.
+1. Use your search tool to find the text of the post or context (e.g., search for "tweet status [ID] text").
+2. If direct search is insufficient, search for quotes or news related to the content of the URL.
 
-MANDATORY CATEGORIES (Select the most accurate):
-- AI/LLM: Large Language Model updates, research, and technicals.
-- AI/Agents: Autonomous workflows, agentic frameworks, and sub-agents.
-- AI/Tools: AI-powered utilities, IDE integrations, and interfaces.
-- Dev/Backend: Node.js, API architecture, and database logic.
-- Dev/Frontend: UI/UX design, HTML/CSS, and Dashboard geometry.
-- Ops/Deploy: Deployment pipelines, process management (PM2).
-- Ops/Security: Audit logs, hardening, and hygiene protocols.
-- Retro/Atari: Atari 2600 development and heritage hardware.
-- Intel/Signals: General news, research data, and external frequency analysis.
+Your technical_summary must describe the ACTUAL facts or topics mentioned in the content (e.g., "The tweet discusses a new AI model release by OpenAI"). 
+DO NOT use vague phrases like "External Signal" or "discrete data point."
 
 JSON SCHEMA:
 {
   "uri": "The exact URL",
-  "subject": "A clear, professional title for the content (Max 10 words)",
-  "category": "The selected category from the list above",
-  "labels": ["#tag1", "#tag2"],
-  "technical_summary": "A 2-3 sentence DETAILED explanation of the content in plain language. Focus on utility.",
-  "persona_note": "A 1-sentence cryptic Borg-style note about the link (Persona permitted here)"
+  "subject": "A clear title describing the TOPIC (e.g., 'OpenAI Sora Update')",
+  "category": "The selected category from our taxonomy",
+  "labels": ["#specific_tag1", "#specific_tag2"],
+  "technical_summary": "A 2-3 sentence PLAIN LANGUAGE description of what the content actually says. NO persona language.",
+  "persona_note": "A 1-sentence cryptic Borg-style note (Persona permitted here)"
 }
-IMPORTANT: Ensure the JSON is valid and distinct from your conversational response.
 `;
 
 module.exports = {
